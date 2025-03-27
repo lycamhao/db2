@@ -1,12 +1,54 @@
-#Danh sach txlog cho insvndb
+# Lenh linux Hay dung
+su - db2inst1
+db2top
+db2start 
+db2stop
+ps -ef | grep db2sysc
+ssh root@192.168.100.10
+ssh root@192.168.100.253 -i .ssh/pve-secondary
+ssh root@192.168.100.250 -i .ssh/pve-secondary
+ssh root@192.168.100.247 -i .ssh/pve-secondary
+ssh manager@192.168.100.240
+yum update -y 
+yum upgrade -y
+getenforce
+
+# Lenh Git hay dung
+git add .
+git commit -m "commit"
+git push 
+git pull
+
+# Xem ip
+ip -c addr
+
+# Doi IP (NetworkManager)
+nmcli connection modify ens18 ipv4.method manual
+nmcli connection modify ens18 ipv4.addresses 192.168.100.250/24
+nmcli connection modify ens18 ipv4.gateway 192.168.100.1
+nmcli connection modify ens18 ipv4.dns "8.8.8.8 8.8.4.4"
+nmcli connection up ens18
+
+nmcli connection modify ens18 ipv4.method manual
+nmcli connection modify ens18 ipv4.addresses 192.168.100.247/24
+nmcli connection modify ens18 ipv4.gateway 192.168.100.1
+nmcli connection modify ens18 ipv4.dns "8.8.8.8 8.8.4.4"
+nmcli connection up ens18
+
+# Tat SELINUX
+sed 's\SELINUX=enforcing\SELINUX=disabled\' /etc/selinux/config
+setenforce disabled
+reboot
+
+# Danh sach txlog cho insvndb
 cd /db2txlog/INSVNDB/NODE0000/LOGSTREAM0000/
 ls -lh /db2txlog/INSVNDB/NODE0000/LOGSTREAM0000/
 
-#Danh sach arclog cho insvndb 
+# Danh sach arclog cho insvndb 
 cd /db2arclog/db2inst1/INSVNDB/NODE0000/LOGSTREAM0000/C0000000/
 ls -lh /db2arclog/db2inst1/INSVNDB/NODE0000/LOGSTREAM0000/C0000000/
 
-#Describe bang
+# Describe bang
 db2 describe table SYSCAT.TABAUTH
 
 # Thiet lap Gioi han su dung CPU cho DB2
@@ -71,6 +113,9 @@ vi /etc/login.defs
 
 #Xoa khoang trang
 echo " Hello" | tr -d ' '
+
+#Thay the chuoi
+sed 's\\'
 
 #Xoa 1 ky tu cuoi gia tri bien
 ${TEN_BIEN::-1}
