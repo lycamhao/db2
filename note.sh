@@ -3,6 +3,7 @@ su - db2inst1
 db2top
 db2start 
 db2stop
+db2iauto -on db2inst1
 ps -ef | grep db2sysc
 ssh root@192.168.100.10
 ssh root@192.168.100.253 -i .ssh/pve-secondary
