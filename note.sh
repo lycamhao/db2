@@ -6,10 +6,13 @@ db2stop
 db2iauto -on db2inst1
 db2set
 db2 describe table
+db2 drop db crm
+db2 drop db hadb
+db2 get dbm cfg | grep -i dbpath
+db2 list db directory
 db2pd -db insvndb -dbcfg
 db2pd -db insvndb -logs
 db2pd -db insvndb -transaction
-db2 list db directory
 
 # Lenh linux Hay dung
 ps -ef | grep db2sysc
