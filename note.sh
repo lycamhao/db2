@@ -1,9 +1,17 @@
-# Lenh linux Hay dung
+# Lenh db2 hay dung
 su - db2inst1
 db2top
 db2start 
 db2stop
 db2iauto -on db2inst1
+db2set
+db2 describe table
+db2pd -db insvndb -dbcfg
+db2pd -db insvndb -logs
+db2pd -db insvndb -transaction
+db2 list db directory
+
+# Lenh linux Hay dung
 ps -ef | grep db2sysc
 ssh root@192.168.100.10
 ssh root@192.168.100.253 -i .ssh/pve-secondary
@@ -13,6 +21,7 @@ ssh manager@192.168.100.240
 yum update -y 
 yum upgrade -y
 getenforce
+source .bashrc
 
 # Lenh Git hay dung
 git add .
