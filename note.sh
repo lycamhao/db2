@@ -2,14 +2,24 @@
 su - db2inst1
 db2top
 db2start 
-db2stop
+# Cho db2 tu khoi dong
 db2iauto -on db2inst1
-db2set
+db2 set DB2_ATS_ENABLE=YES
+db2 set DB2COMM=TCPIP
+db2 set DB2AUTOSTART=YES
+# Khoi dong HADR
+db2 start hadr on db hadb as standby
+db2 start hadr on db hadb as primary
+
 db2 describe table
 db2pd -db insvndb -dbcfg
 db2pd -db insvndb -logs
 db2pd -db insvndb -transaction
 db2 list db directory
+db2 get dbm cfg
+db2 get db cfg for crm 
+db2 get db cfg for hadb
+db2 get db cfg for insvndb
 
 # Lenh linux Hay dung
 ps -ef | grep db2sysc

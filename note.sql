@@ -24,7 +24,7 @@ SELECT varchar(container_name,70) as container_name, varchar(tbsp_name,20) as tb
 SELECT varchar(container_name, 70) as container_name FROM TABLE(MON_GET_CONTAINER('',-1)) AS t WHERE accessible = 0 WITH UR
 
 -- Truy vấn mức độ sử dụng của container
-SELECT varchar(container_name, 65) as container_name, fs_id, fs_used_size, fs_total_size, CASE WHEN fs_total_size > 0 THEN DEC(100*(FLOAT(fs_used_size)/FLOAT(fs_total_size)),5,2) ELSE DEC(-1,5,2) END as utilization FROM TABLE(MON_GET_CONTAINER('',-1)) AS t ORDER BY utilization DESC WITH UR
+SELECT varchar(container_name, 65) as container_name, fs_id, fs_used_size/1000 as fs_used_size, fs_total_size/1000 as fs_total_size, CASE WHEN fs_total_size > 0 THEN DEC(100*(FLOAT(fs_used_size)/FLOAT(fs_total_size)),5,2) ELSE DEC(-1,5,2) END as utilization FROM TABLE(MON_GET_CONTAINER('',-1)) AS t ORDER BY utilization DESC WITH UR
 
 -- Giới hạn mức độ sử dụng CPU 80%
 -- Chuyển setting giới hạn CPU sang yes: update dbm cfg using WLM_CPU_DISPATCHER YES, update db cfg for insvnd using WLM_CPU_LIMIT 80
@@ -58,11 +58,11 @@ SELECT C.APPLICATION_HANDLE, C.APPLICATION_NAME, A.ACTIVITY_TYPE FROM TABLE(MON_
 -- Truy vấn tất cả các hoạt động bằng bảng ACTIVITY
 SELECT APPLICATION_HANDLE, varchar(APPLICATION_NAME,25) AS APPLICATION_NAME, ACTIVITY_ID, ACTIVITY_STATE, varchar(ACTIVITY_TYPE,15) as ACTIVITY_TYPE, TOTAL_CPU_TIME, ROWS_READ, ROWS_RETURNED FROM TABLE(MON_GET_ACTIVITY(NULL,-1)) WITH UR
 
--- Truy vấn thông tin application
+-- Truy vấn thông tin application hiện tại đang kết nối vào db2
 select application_handle, application_name, application_id, member, rows_read from table(sysproc.mon_get_connection(sysproc.mon_get_application_handle(), -1)) as conn WITH UR
 
 -- Truy vấn thông tin agent
-SELECT APPLICATION_HANDLE, VARCHAR(WORKLOAD_NAME,25) AS WORKLOAD_NAME, VARCHAR(SERVICE_SUPERCLASS_NAME,25) AS SERVICE_SUPERCLASS_NAME FROM TABLE(MON_GET_AGENT(NULL,NULL,NULL,-1)) WITH UR
+SELECT APPLICATION_HANDLE, SUBSTR(APPLICATION_NAME,1,30) AS APPLICATION_NAME, VARCHAR(WORKLOAD_NAME,25) AS WORKLOAD_NAME, VARCHAR(SERVICE_SUPERCLASS_NAME,25) AS SERVICE_SUPERCLASS_NAME FROM TABLE(MON_GET_AGENT(NULL,NULL,NULL,-1)) WHERE WORKLOAD_NAME = 'WL_CPU_80' WITH UR 
 
 -- Truy vấn thông tin lock
 SELECT APPLICATION_HANDLE, MEMBER, LOCK_NAME, VARCHAR(LOCK_OBJECT_TYPE_ID,10) AS LOCK_OBJECT_TYPE_ID, VARCHAR(LOCK_OBJECT_TYPE,15) AS LOCK_OBJECT_TYPE, LOCK_MODE, LOCK_STATUS, LOCK_COUNT, LOCK_HOLD_COUNT, TBSP_ID, TAB_FILE_ID FROM TABLE(MON_GET_LOCKS(NULL,-1)) WHERE TAB_FILE_ID IS NOT NULL WITH UR
