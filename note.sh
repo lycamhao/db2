@@ -12,14 +12,21 @@ db2 start hadr on db hadb as standby
 db2 start hadr on db hadb as primary
 
 db2 describe table
+db2 drop db crm
+db2 drop db hadb
+db2 get dbm cfg | grep -i dbpath
+db2 list db directory
 db2pd -db insvndb -dbcfg
 db2pd -db insvndb -logs
 db2pd -db insvndb -transaction
+<<<<<<< HEAD
 db2 list db directory
 db2 get dbm cfg
 db2 get db cfg for crm 
 db2 get db cfg for hadb
 db2 get db cfg for insvndb
+=======
+>>>>>>> 89927675b9d2d2e5aa208afe7e11fd27f1c8ce25
 
 # Lenh linux Hay dung
 ps -ef | grep db2sysc
