@@ -10,6 +10,16 @@ db2 set DB2AUTOSTART=YES
 # Khoi dong HADR
 db2 start hadr on db hadb as standby
 db2 start hadr on db hadb as primary
+# Cac thiet lap de chay hadr
+db2 update db cfg for $db USING HADR_LOCAL_HOST SV1
+db2 update db cfg for $db USING HADR_REMOTE_HOST SV2
+db2 update db cfg for $db USING HADR_LOCAL_SVC 51601
+db2 update db cfg for $db USING HADR_REMOTE_SVC 51601
+db2 update db cfg for $db USING HADR_REMOTE_INST DB2INST1
+db2 update db cfg for $db USING HADR_SYNCMODE SYNC
+db2 update db cfg for $db USING HADR_PEER_WINDOW 120
+db2 update db cfg for $db USING LOGINDEXBUILD ON
+db2 update db cfg for $db USING INDEXREC RESTART
 
 db2 describe table
 db2 drop db crm
@@ -19,14 +29,6 @@ db2 list db directory
 db2pd -db insvndb -dbcfg
 db2pd -db insvndb -logs
 db2pd -db insvndb -transaction
-<<<<<<< HEAD
-db2 list db directory
-db2 get dbm cfg
-db2 get db cfg for crm 
-db2 get db cfg for hadb
-db2 get db cfg for insvndb
-=======
->>>>>>> 89927675b9d2d2e5aa208afe7e11fd27f1c8ce25
 
 # Lenh linux Hay dung
 ps -ef | grep db2sysc
@@ -43,7 +45,7 @@ source .bashrc
 # Lenh Git hay dung
 git add .
 git commit -m "commit"
-git push 
+git push
 git pull
 
 # Xem ip
@@ -52,12 +54,6 @@ ip -c addr
 # Doi IP (NetworkManager)
 nmcli connection modify ens18 ipv4.method manual
 nmcli connection modify ens18 ipv4.addresses 192.168.100.250/24
-nmcli connection modify ens18 ipv4.gateway 192.168.100.1
-nmcli connection modify ens18 ipv4.dns "8.8.8.8 8.8.4.4"
-nmcli connection up ens18
-
-nmcli connection modify ens18 ipv4.method manual
-nmcli connection modify ens18 ipv4.addresses 192.168.100.247/24
 nmcli connection modify ens18 ipv4.gateway 192.168.100.1
 nmcli connection modify ens18 ipv4.dns "8.8.8.8 8.8.4.4"
 nmcli connection up ens18
@@ -143,6 +139,7 @@ echo " Hello" | tr -d ' '
 
 #Thay the chuoi
 sed 's\\'
+tr '-' ';'
 
 #Xoa 1 ky tu cuoi gia tri bien
 ${TEN_BIEN::-1}
