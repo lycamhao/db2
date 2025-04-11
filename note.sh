@@ -8,8 +8,12 @@ db2 set DB2_ATS_ENABLE=YES
 db2 set DB2COMM=TCPIP
 db2 set DB2AUTOSTART=YES
 # Khoi dong HADR
-db2 start hadr on db hadb as standby
-db2 start hadr on db hadb as primary
+db2 start hadr on db $db as standby
+db2 start hadr on db $db as primary
+
+db2 deactivate db $db 
+db2 stop hadr on db $db
+
 # Cac thiet lap de chay hadr
 db2 update db cfg for $db USING HADR_LOCAL_HOST SV1
 db2 update db cfg for $db USING HADR_REMOTE_HOST SV2
@@ -17,9 +21,12 @@ db2 update db cfg for $db USING HADR_LOCAL_SVC 51601
 db2 update db cfg for $db USING HADR_REMOTE_SVC 51601
 db2 update db cfg for $db USING HADR_REMOTE_INST DB2INST1
 db2 update db cfg for $db USING HADR_SYNCMODE SYNC
-db2 update db cfg for $db USING HADR_PEER_WINDOW 120
+db2 update db cfg for $db USING HADR_PEER_WINDOW 30
 db2 update db cfg for $db USING LOGINDEXBUILD ON
 db2 update db cfg for $db USING INDEXREC RESTART
+# Dua db ve trang thai normal
+## Truong hop 1: cac file log van con du
+db2 rollforward db $db to end of logs and complete
 
 db2 describe table
 db2 drop db crm
@@ -41,6 +48,8 @@ yum update -y
 yum upgrade -y
 getenforce
 source .bashrc
+
+# Vi tri luu log batch tren 48.2
 
 # Lenh Git hay dung
 git add .
