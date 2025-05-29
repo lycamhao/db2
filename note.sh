@@ -1,17 +1,19 @@
 # Lenh db2 hay dung
 su - db2inst1
 db2top
-db2start 
+db2start
+
 # Cho db2 tu khoi dong
 db2iauto -on db2inst1
 db2 set DB2_ATS_ENABLE=YES
 db2 set DB2COMM=TCPIP
 db2 set DB2AUTOSTART=YES
+
 # Khoi dong HADR
 db2 start hadr on db $db as standby
 db2 start hadr on db $db as primary
 
-db2 deactivate db $db 
+db2 deactivate db $db
 db2 stop hadr on db $db
 
 # Cac thiet lap de chay hadr
@@ -24,6 +26,7 @@ db2 update db cfg for $db USING HADR_SYNCMODE SYNC
 db2 update db cfg for $db USING HADR_PEER_WINDOW 30
 db2 update db cfg for $db USING LOGINDEXBUILD ON
 db2 update db cfg for $db USING INDEXREC RESTART
+
 # Dua db ve trang thai normal
 ## Truong hop 1: cac file log van con du
 db2 rollforward db $db to end of logs and complete
@@ -44,7 +47,7 @@ ssh root@192.168.100.253 -i .ssh/pve-secondary
 ssh root@192.168.100.250 -i .ssh/pve-secondary
 ssh root@192.168.100.247 -i .ssh/pve-secondary
 ssh manager@192.168.100.240
-yum update -y 
+yum update -y
 yum upgrade -y
 getenforce
 source .bashrc
@@ -153,6 +156,9 @@ tr '-' ';'
 #Xoa 1 ky tu cuoi gia tri bien
 ${TEN_BIEN::-1}
 
+#Tim kiem chuoi ip 
+ grep server1 basic.cfg | grep -oP "ip1=\K[^|]+"
+ 
 #So sanh chuoi
 if [ ${TEN_BIEN} -eq "ABC" ];then
     echo "Bang nhau"
@@ -167,3 +173,58 @@ fi
 #Chú ý:
 #Trước khi đọc giá trị từ một file vào trong shellscript mà giá trị đó là số thì hãy xóa khoảng trắng đi trước khi đưa vào
 #Linux sử dụng LF, windows sử dụng CRLF
+
+# Cài đặt corosync-qnetd từ bộ cài đặt của DB2 11.5.9.0
+cd /server_dec/db2/linuxamd64/pcmk/Linux/rhel/rhel8/x86_64
+dnf install corosync-qnetd-3.0.3-1.db2pcmk.el8.x86_64.rpm
+
+
+
+# Cấu trúc chuẩn file inventory.yml
+all:
+  children:
+    linux-first:
+        hosts:
+          192.168.100.250:
+          192.168.100.247:
+
+# Cấu trúc chuẩn của playbook.yml
+- name: Playbook for Linux First
+  hosts: all
+  become: true
+  vars:
+    admin_user: # Lấy từ vault
+    admin_password: # Lấy từ vault
+  tasks:
+    - name: Ensure packages are installed
+      yum:
+        name:
+          - vim
+          - git
+        state: present
+
+    - name: Create a directory
+      file:
+
+# Các câu lệnh của ansible hay dùng
+# Tạo vault với nano
+EDITOR=nano ansible-vault create secrets.yml # Đặt pass cho vault
+# Gắn vault vào trong playbook với cấu trúc như sau:
+vars_files:
+    - secrets.yml
+  vars:
+    ansible_user: "{{ admin_user }}"
+    ansible_password: "{{ admin_password }}"
+    ansible_ssh_host_key_checking: false
+
+# Chạy playbook với vault
+ansible-playbook -i inventory.yml playbook.yml --ask-vault-pass
+
+# Chạy playbook với vault và không cần nhập pass
+ansible-playbook -i inventory.yml playbook.yml --vault-password-file ~/.vault_pass.txt
+
+# Mã hóa vault_pass.txt
+openssl enc -aes-256-cbc -salt -in vault_pass.txt -out vault_pass.txt.enc
+
+# Chạy playbook với vault đã mã hóa
+ansible-playbook -i inventory.yml playbook.yml --vault-password-file ~/.vault_pass.txt.enc
