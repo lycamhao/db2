@@ -208,3 +208,48 @@ SELECT LOWER('Hello World') FROM SYSIBM.SYSDUMMY1;
 SELECT LENGTH('Hello World') FROM SYSIBM.SYSDUMMY1;
 
 -- 
+
+-- ORA-01653
+-- unable to increase tablespace tablespace_name by storage_allocatedstorage_units during insert or update on table schema_name.table_name
+-- tablespace_name: The name of the tablespace that is supposed to be extended during the operation.
+-- storage_allocated: The number of bytes in KB, MB, or GB for the attempted allocation.
+-- storage_units: The unit of bytes in KB, MB, or GB in which storage is allocated.
+-- schema_name: The schema name of table.
+-- table_name: The table name.
+-- Cause
+-- In order to execute the insert or update operation, additional space is needed in the tablespace. However, the system is unable to increase the tablespace.
+
+-- Action
+-- Depending on the tablespace attributes and storage strategy, take one of the following actions:
+
+-- Resize the tablespace using either the ALTER DATABASE DATAFILE RESIZE or ALTER TABLESPACE ADD DATAFILE statement.
+-- Enable AUTOEXTEND for the tablespace.
+-- If AUTOEXTEND is already enabled:
+-- And MAXSIZE is set to UNLIMITED, increase the storage media where the tablespace is located.
+-- Increase MAXSIZE.
+-- If it is a BIGFILE tablespace, use the ALTER TABLESPACE RESIZE
+-- statement to increase the tablespace.
+
+-- ORACLE
+-- Truy vấn thông tin dung lượng của các tablespace trong Oracle
+SELECT 
+    b.tablespace_name, 
+    ROUND(b.tbs_size, 2) AS SizeMb, 
+    ROUND(a.free_space, 2) AS FreeMb
+FROM  
+    (SELECT 
+        tablespace_name, 
+        ROUND(SUM(bytes) / 1024 / 1024, 2) AS free_space
+     FROM 
+        dba_free_space
+     GROUP BY 
+        tablespace_name) a
+JOIN 
+    (SELECT 
+        tablespace_name, 
+        ROUND(SUM(bytes) / 1024 / 1024, 2) AS tbs_size
+     FROM 
+        dba_data_files
+     GROUP BY 
+        tablespace_name) b
+ON a.tablespace_name = b.tablespace_name;
