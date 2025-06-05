@@ -1,5 +1,8 @@
 -- Danh sách event monitor
-SELECT SUBSTR(EVMONNAME,1,20) AS EVMON_NAME, TARGET_TYPE, OWNER FROM SYSCAT.EVENTMONITORS WITH UR
+SELECT SUBSTR(EVMONNAME,1,20) AS EVMON_NAME, TARGET_TYPE, MONSCOPE, AUTOSTART, WRITE_MODE, OWNER FROM SYSCAT.EVENTMONITORS WITH UR
+
+-- Danh sách event monitor với các trường được định dạng
+SELECT SUBSTR(EVMONNAME, 1, 20) AS EVMON_NAME, CASE TARGET_TYPE WHEN 'F' THEN 'File (F)' WHEN 'T' THEN 'Table (T)' WHEN 'P' THEN 'Pipe (P)' WHEN 'U' THEN 'Unformatted (U)' END AS TARGET_TYPE, CASE MONSCOPE WHEN 'G' THEN 'Global (G)' WHEN 'L' THEN 'Local (L)' WHEN 'T' THEN 'T' END AS MONSCOPE, AUTOSTART, CASE WRITE_MODE WHEN 'A' THEN 'Append (A)' WHEN 'R' THEN 'Replace (R)' END AS WRITE_MODE, OWNER FROM SYSCAT.EVENTMONITORS
 
 -- Danh sách workload
 SELECT SUBSTR(EVMONNAME,1,20) AS EVMON_NAME, TARGET_TYPE, OWNER FROM SYSCAT.WORKLOADS WITH UR
@@ -161,7 +164,7 @@ SELECT varchar(tabschema, 20) as tabschema, varchar(tabname, 40) as tabname, sum
 SELECT SUBSTR(TABNAME,1,30) AS TABNAME, DATA_OBJECT_P_SIZE, INDEX_OBJECT_P_SIZE, LONG_OBJECT_P_SIZE, LOB_OBJECT_P_SIZE, XML_OBJECT_P_SIZE FROM SYSIBMADM.ADMINTABINFO WHERE TABNAME = 'DTATA400';
 
 -- Truy vấn tổng dung lượng của 1 bảng (đơn vị là KB)
-select tabschema || '.' || tabname as table, decimal( ( data_object_p_size + index_object_p_size + long_object_p_size + lob_object_p_size + xml_object_p_size ) / 1024, 10, 2 ) as physical_space, decimal( ( data_object_l_size + index_object_l_size + long_object_l_size + lob_object_l_size + xml_object_l_size ) / 1024, 10, 2 ) as logical_space from sysibmadm.admintabinfo where tabname = 'DTATA400';
+select tabschema || '.' || tabname as table, ( ( data_object_p_size + index_object_p_size + long_object_p_size + lob_object_p_size + xml_object_p_size ) / 1024 ) as physical_space, ( ( data_object_l_size + index_object_l_size + long_object_l_size + lob_object_l_size + xml_object_l_size ) / 1024 ) as logical_space from sysibmadm.admintabinfo where tabschema NOT LIKE 'SYS%' and tabschema NOT LIKE 'DB2INST1%' and tabschema NOT LIKE 'DB2ADMIN%' FETCH FIRST 10 ROWS ONLY;
 
 -- Tạo bảng 
 CREATE TABLE DBAE.DTAET100 (
