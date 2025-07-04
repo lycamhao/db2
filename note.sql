@@ -166,6 +166,9 @@ SELECT SUBSTR(TABNAME,1,30) AS TABNAME, DATA_OBJECT_P_SIZE, INDEX_OBJECT_P_SIZE,
 -- Truy vấn tổng dung lượng của 1 bảng (đơn vị là KB)
 select tabschema || '.' || tabname as table, ( ( data_object_p_size + index_object_p_size + long_object_p_size + lob_object_p_size + xml_object_p_size ) / 1024 ) as physical_space, ( ( data_object_l_size + index_object_l_size + long_object_l_size + lob_object_l_size + xml_object_l_size ) / 1024 ) as logical_space from sysibmadm.admintabinfo where tabschema NOT LIKE 'SYS%' and tabschema NOT LIKE 'DB2INST1%' and tabschema NOT LIKE 'DB2ADMIN%' FETCH FIRST 10 ROWS ONLY;
 
+-- Kiểm tra bảng có cần reorg hay không
+REORGCHK CURRENT STATISTICS ON TABLE T1
+RUNSTATS ON TABLE T1 WITH DISTRIBUTION AND DETAILED INDEXES ALL
 -- Tạo bảng 
 CREATE TABLE DBAE.DTAET100 (
     ID INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1),
@@ -207,7 +210,24 @@ SELECT LOWER('Hello World') FROM SYSIBM.SYSDUMMY1;
 -- Đếm độ dài chuỗi
 SELECT LENGTH('Hello World') FROM SYSIBM.SYSDUMMY1;
 
--- 
+-- Xóa dữ liệu của DB không nên quá 10 tr bản ghi trên bảng, vì khi xóa no sẽ sinh ra archive log, nếu xóa quá nhiều sẽ làm cho archive log tăng lên nhanh chóng, làm treo database, nên cân nhắc trước khi xóa có thể nghĩ đến phương pháp truncate, tuy nhiên truncate sẽ không redo, undo dc dữ liệu. Trong Oracle thì muốn undo lại dữ liệu thì sử dụng flashback. Trong oracle sử dụng undo retention hoặc undo tablespace phải đủ lớn để lưu dữ liệu cũ.
+
+--  Partition --
+-- Chú ý: Trong điều kiện partion, nên kết hợp với dev để biết trong câu lệnh là gì, có quét partition hay không.
+-- Tại sao phải partition: Bảng lớn dần, đến ngưỡng 100tr bản ghi -> khó dọn dẹp, select dữ liệu khó.
+-- Khi nào partition:
+-- Khi bảng dữ liệu > 2GB (khoảng 50tr bản ghi) => cân nhắc partition (theo ngày, theo tháng ,  ...)
+-- Dữ liệu lịch sử => quy luật xoay vòng dữ liệu => Nghiệp vụ: muốn lưu lâu dài, DBA: muốn tối ưu, 2 bên nên thương lượng để đửa ra quy trình hợp lý, nếu không thì xem xét giữ lại dữ liệu trong khoảng thời gian nhất định, sau đó xóa đi.
+-- Dữ liệu nào cần truy xuất nhiều, update nhiều thì nên để partition ở phân vùng có thể truy xuất nhanh, còn dữ liệu ít truy xuất thì có thể để ở phân vùng khác, không cần truy xuất nhiều.
+-- Các loại partition trong Oracle: range partition (theo ngày, theo number), list partition (ví dụ theo tỉnh thành: HCM, Hà Nội, Đà Nẵng,...), Hash partition (láy 1 trường ra làm tiêu chí để partition, ví dụ số điện thoại, email), composite partition (kết hợp các loại partition trên).
+-- Chia nhỏ thêm từ partition thì gọi là composite partition.
+-- Độ lớn partition: từ 10k row trở đi. (100k - 1tr, 2tr là phù hợp), tuy nhiên tùy vào trường hợp lưu trữ là OLTP hoặc OLAP. OLTP là phải nhanh, phần lớn phải có index trên OLTP. Datawarehouse thì lại không cần index, nên dùng parrallel (4 ,8, 16, ...) và tùy vào tài nguyên.
+-- Lưu trữ partition: Có data thì có index tương ứng. 
+-- Index: nên dùng index local.
+-- Bảng càng lớn thì index càng lớn.
+-- Chu kỳ lưu trữ: rà soát lại dữ liệu theo quy trình, log thì lưu trữ 1 tháng, 3 tháng, 6 tháng, ... tùy vào quy trình của từng công ty.
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- ORACLE -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 -- ORA-01653
 -- unable to increase tablespace tablespace_name by storage_allocatedstorage_units during insert or update on table schema_name.table_name
@@ -229,8 +249,11 @@ SELECT LENGTH('Hello World') FROM SYSIBM.SYSDUMMY1;
 -- Increase MAXSIZE.
 -- If it is a BIGFILE tablespace, use the ALTER TABLESPACE RESIZE
 -- statement to increase the tablespace.
-
--- ORACLE
+-- Sửa lỗi ORA-01653
+-- Tăng dung lượng của tablespace
+ALTER DATABASE DATAFILE 'path_to_datafile' RESIZE new_size;
+-- Hoặc
+ALTER TABLESPACE tablespace_name ADD DATAFILE 'path_to_new_datafile' SIZE new_size;
 -- Truy vấn thông tin dung lượng của các tablespace trong Oracle
 SELECT 
     b.tablespace_name, 
